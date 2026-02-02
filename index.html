@@ -1,0 +1,1268 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#1e3a5f">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="مساعدي المالي">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%231e3a5f' width='100' height='100' rx='20'/><text x='50' y='65' font-size='50' text-anchor='middle' fill='white'>💰</text></svg>">
+    <link rel="manifest" href="manifest.json">
+    <title>مساعدي المالي</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Cairo', sans-serif; }
+        .tab-active { background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%); color: white; }
+        .card { background: white; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
+        .btn-primary { background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%); }
+        .btn-success { background: linear-gradient(135deg, #059669 0%, #10b981 100%); }
+        .btn-danger { background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%); }
+        .btn-gold { background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%); }
+        .input-field { border: 2px solid #e5e7eb; border-radius: 12px; padding: 12px 16px; width: 100%; transition: all 0.3s; }
+        .input-field:focus { border-color: #1e3a5f; outline: none; box-shadow: 0 0 0 3px rgba(30,58,95,0.1); }
+        .balance-card { background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 50%, #1e3a5f 100%); }
+        .gold-card { background: linear-gradient(135deg, #92400e 0%, #d97706 50%, #f59e0b 100%); }
+        .zakat-card { background: linear-gradient(135deg, #065f46 0%, #059669 50%, #10b981 100%); }
+        .progress-bar { height: 12px; border-radius: 6px; background: #e5e7eb; overflow: hidden; }
+        .progress-fill { height: 100%; border-radius: 6px; transition: width 0.5s ease; }
+        .modal-overlay { background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
+        .debt-in { border-right: 4px solid #059669; }
+        .debt-out { border-right: 4px solid #dc2626; }
+        .category-chip { padding: 6px 14px; border-radius: 20px; font-size: 12px; cursor: pointer; transition: all 0.2s; }
+        .category-chip.active { transform: scale(1.05); }
+        .nav-item { transition: all 0.2s; }
+        .nav-item:hover { transform: translateY(-2px); }
+        .fade-in { animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .slide-up { animation: slideUp 0.4s ease; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(100%); } to { opacity: 1; transform: translateY(0); } }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #1e3a5f; border-radius: 3px; }
+        select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: left 12px center; background-size: 20px; padding-left: 40px; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div id="app"></div>
+
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/recharts@2.8.0/umd/Recharts.js"></script>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
+        const { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line } = Recharts;
+
+        // Icons as components
+        const Icons = {
+            Home: () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>,
+            Wallet: () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>,
+            Users: () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>,
+            TrendingUp: () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>,
+            Heart: () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>,
+            Chart: () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>,
+            Plus: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>,
+            Minus: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" /></svg>,
+            Edit: () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>,
+            Trash: () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>,
+            Check: () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>,
+            X: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>,
+            Settings: () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>,
+            ArrowUp: () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" /></svg>,
+            ArrowDown: () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" /></svg>,
+            Calendar: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>,
+            Refresh: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>,
+        };
+
+        // Categories
+        const EXPENSE_CATEGORIES = [
+            { id: 'food', name: 'أكل', emoji: '🍔', color: '#ef4444' },
+            { id: 'transport', name: 'مواصلات', emoji: '🚗', color: '#f97316' },
+            { id: 'health', name: 'علاج', emoji: '💊', color: '#06b6d4' },
+            { id: 'bills', name: 'فواتير', emoji: '📄', color: '#8b5cf6' },
+            { id: 'shopping', name: 'تسوق', emoji: '🛍️', color: '#ec4899' },
+            { id: 'entertainment', name: 'ترفيه', emoji: '🎬', color: '#f59e0b' },
+            { id: 'education', name: 'تعليم', emoji: '📚', color: '#10b981' },
+            { id: 'other', name: 'أخرى', emoji: '📦', color: '#6b7280' },
+        ];
+
+        const INCOME_CATEGORIES = [
+            { id: 'salary', name: 'مرتب', emoji: '💼', color: '#10b981' },
+            { id: 'freelance', name: 'عمل حر', emoji: '💻', color: '#3b82f6' },
+            { id: 'gift', name: 'هدية', emoji: '🎁', color: '#ec4899' },
+            { id: 'investment', name: 'استثمار', emoji: '📈', color: '#f59e0b' },
+            { id: 'other', name: 'أخرى', emoji: '💰', color: '#6b7280' },
+        ];
+
+        const GOLD_TYPES = [
+            { id: '24', name: 'عيار 24', purity: 1 },
+            { id: '21', name: 'عيار 21', purity: 0.875 },
+            { id: '18', name: 'عيار 18', purity: 0.75 },
+        ];
+
+        // Utility functions
+        const formatMoney = (amount) => {
+            return new Intl.NumberFormat('ar-EG', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount) + ' ج.م';
+        };
+
+        const formatDate = (date) => {
+            return new Date(date).toLocaleDateString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric' });
+        };
+
+        const generateId = () => Math.random().toString(36).substr(2, 9);
+
+        // Local Storage
+        const saveData = (key, data) => localStorage.setItem(key, JSON.stringify(data));
+        const loadData = (key, defaultValue) => {
+            const data = localStorage.getItem(key);
+            return data ? JSON.parse(data) : defaultValue;
+        };
+
+        // Modal Component
+        const Modal = ({ isOpen, onClose, title, children }) => {
+            if (!isOpen) return null;
+            return (
+                <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center modal-overlay" onClick={onClose}>
+                    <div className="bg-white w-full sm:w-96 sm:rounded-2xl rounded-t-3xl p-6 slide-up max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-lg font-bold text-gray-800">{title}</h3>
+                            <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full"><Icons.X /></button>
+                        </div>
+                        {children}
+                    </div>
+                </div>
+            );
+        };
+
+        // Main App Component
+        const App = () => {
+            const [activeTab, setActiveTab] = useState('home');
+            const [transactions, setTransactions] = useState(() => loadData('transactions', []));
+            const [debts, setDebts] = useState(() => loadData('debts', []));
+            const [goldHoldings, setGoldHoldings] = useState(() => loadData('goldHoldings', []));
+            const [settings, setSettings] = useState(() => loadData('settings', { monthlyBudget: 5000, currency: 'EGP' }));
+            const [goldPrices, setGoldPrices] = useState({ '24': 4500, '21': 3937, '18': 3375 });
+            const [showModal, setShowModal] = useState(null);
+            const [editItem, setEditItem] = useState(null);
+
+            // Save to localStorage
+            useEffect(() => { saveData('transactions', transactions); }, [transactions]);
+            useEffect(() => { saveData('debts', debts); }, [debts]);
+            useEffect(() => { saveData('goldHoldings', goldHoldings); }, [goldHoldings]);
+            useEffect(() => { saveData('settings', settings); }, [settings]);
+
+            // Fetch Gold Prices (simulated - in real app would use API)
+            const fetchGoldPrices = async () => {
+                // Simulated prices - in production, use real API
+                const base24 = 4500 + Math.random() * 100 - 50;
+                setGoldPrices({
+                    '24': Math.round(base24),
+                    '21': Math.round(base24 * 0.875),
+                    '18': Math.round(base24 * 0.75)
+                });
+            };
+
+            useEffect(() => { fetchGoldPrices(); }, []);
+
+            // Calculations
+            const balance = useMemo(() => {
+                return transactions.reduce((acc, t) => {
+                    return t.type === 'income' ? acc + t.amount : acc - t.amount;
+                }, 0);
+            }, [transactions]);
+
+            const monthlyExpenses = useMemo(() => {
+                const now = new Date();
+                const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+                return transactions
+                    .filter(t => t.type === 'expense' && new Date(t.date) >= startOfMonth)
+                    .reduce((acc, t) => acc + t.amount, 0);
+            }, [transactions]);
+
+            const debtsToMe = useMemo(() => debts.filter(d => d.type === 'to_me' && d.remaining > 0), [debts]);
+            const debtsFromMe = useMemo(() => debts.filter(d => d.type === 'from_me' && d.remaining > 0), [debts]);
+            const totalDebtsToMe = useMemo(() => debtsToMe.reduce((acc, d) => acc + d.remaining, 0), [debtsToMe]);
+            const totalDebtsFromMe = useMemo(() => debtsFromMe.reduce((acc, d) => acc + d.remaining, 0), [debtsFromMe]);
+
+            const goldValue = useMemo(() => {
+                return goldHoldings.reduce((acc, g) => acc + (g.weight * goldPrices[g.type]), 0);
+            }, [goldHoldings, goldPrices]);
+
+            const goldProfit = useMemo(() => {
+                return goldHoldings.reduce((acc, g) => {
+                    const currentValue = g.weight * goldPrices[g.type];
+                    const purchaseValue = g.weight * g.purchasePrice;
+                    return acc + (currentValue - purchaseValue);
+                }, 0);
+            }, [goldHoldings, goldPrices]);
+
+            // Zakat Calculation
+            const nisabValue = goldPrices['24'] * 85; // 85 grams of gold
+            const zakatableAmount = balance + goldValue;
+            const isZakatDue = zakatableAmount >= nisabValue;
+            const zakatAmount = isZakatDue ? zakatableAmount * 0.025 : 0;
+
+            // Transaction handlers
+            const addTransaction = (data) => {
+                const newTransaction = { id: generateId(), date: new Date().toISOString(), ...data };
+                setTransactions([newTransaction, ...transactions]);
+                setShowModal(null);
+            };
+
+            const deleteTransaction = (id) => {
+                setTransactions(transactions.filter(t => t.id !== id));
+            };
+
+            // Debt handlers
+            const addDebt = (data) => {
+                const newDebt = { id: generateId(), date: new Date().toISOString(), remaining: data.amount, payments: [], ...data };
+                setDebts([newDebt, ...debts]);
+                setShowModal(null);
+            };
+
+            const payDebt = (debtId, amount) => {
+                setDebts(debts.map(d => {
+                    if (d.id === debtId) {
+                        const newRemaining = Math.max(0, d.remaining - amount);
+                        const payment = { date: new Date().toISOString(), amount };
+                        // Auto-add transaction
+                        const transactionType = d.type === 'to_me' ? 'income' : 'expense';
+                        const note = d.type === 'to_me' ? `سداد دين من ${d.person}` : `سداد دين لـ ${d.person}`;
+                        addTransaction({ type: transactionType, amount, category: 'other', note });
+                        return { ...d, remaining: newRemaining, payments: [...d.payments, payment] };
+                    }
+                    return d;
+                }));
+            };
+
+            const deleteDebt = (id) => {
+                setDebts(debts.filter(d => d.id !== id));
+            };
+
+            // Gold handlers
+            const addGold = (data) => {
+                const newGold = { id: generateId(), date: new Date().toISOString(), ...data };
+                setGoldHoldings([newGold, ...goldHoldings]);
+                // Auto-add expense transaction
+                addTransaction({ type: 'expense', amount: data.weight * data.purchasePrice, category: 'other', note: `شراء ذهب ${GOLD_TYPES.find(g => g.id === data.type).name}` });
+                setShowModal(null);
+            };
+
+            const sellGold = (id) => {
+                const gold = goldHoldings.find(g => g.id === id);
+                if (gold) {
+                    const saleValue = gold.weight * goldPrices[gold.type];
+                    addTransaction({ type: 'income', amount: saleValue, category: 'investment', note: `بيع ذهب ${GOLD_TYPES.find(g => g.id === gold.type).name}` });
+                    setGoldHoldings(goldHoldings.filter(g => g.id !== id));
+                }
+            };
+
+            // Sadaqa handler
+            const addSadaqa = (amount, note) => {
+                addTransaction({ type: 'expense', amount, category: 'other', note: note || 'صدقة' });
+            };
+
+            // Reset handler
+            const resetAllData = () => {
+                if (confirm('هل أنت متأكد من حذف جميع البيانات؟ لا يمكن التراجع عن هذا الإجراء.')) {
+                    setTransactions([]);
+                    setDebts([]);
+                    setGoldHoldings([]);
+                    setSettings({ monthlyBudget: 5000, currency: 'EGP' });
+                }
+            };
+
+            // Tab Components
+            const tabs = {
+                home: <HomeTab 
+                    balance={balance} 
+                    monthlyExpenses={monthlyExpenses} 
+                    settings={settings}
+                    debtsToMe={totalDebtsToMe}
+                    debtsFromMe={totalDebtsFromMe}
+                    goldValue={goldValue}
+                    goldProfit={goldProfit}
+                    transactions={transactions}
+                    onAddIncome={() => setShowModal('income')}
+                    onAddExpense={() => setShowModal('expense')}
+                />,
+                transactions: <TransactionsTab 
+                    transactions={transactions} 
+                    onDelete={deleteTransaction}
+                    onAddIncome={() => setShowModal('income')}
+                    onAddExpense={() => setShowModal('expense')}
+                />,
+                debts: <DebtsTab 
+                    debtsToMe={debtsToMe}
+                    debtsFromMe={debtsFromMe}
+                    totalToMe={totalDebtsToMe}
+                    totalFromMe={totalDebtsFromMe}
+                    onAdd={() => setShowModal('debt')}
+                    onPay={payDebt}
+                    onDelete={deleteDebt}
+                />,
+                gold: <GoldTab 
+                    holdings={goldHoldings}
+                    prices={goldPrices}
+                    totalValue={goldValue}
+                    totalProfit={goldProfit}
+                    onAdd={() => setShowModal('gold')}
+                    onSell={sellGold}
+                    onRefresh={fetchGoldPrices}
+                />,
+                zakat: <ZakatTab 
+                    balance={balance}
+                    goldValue={goldValue}
+                    nisabValue={nisabValue}
+                    zakatableAmount={zakatableAmount}
+                    isZakatDue={isZakatDue}
+                    zakatAmount={zakatAmount}
+                    goldPrice24={goldPrices['24']}
+                    onAddSadaqa={() => setShowModal('sadaqa')}
+                />,
+                reports: <ReportsTab 
+                    transactions={transactions}
+                    settings={settings}
+                />,
+                settings: <SettingsTab 
+                    settings={settings}
+                    onUpdate={setSettings}
+                    onReset={resetAllData}
+                />,
+            };
+
+            return (
+                <div className="min-h-screen bg-gray-100 pb-20">
+                    {/* Header */}
+                    <div className="bg-gradient-to-l from-[#1e3a5f] to-[#2d5a87] text-white p-4 pt-8">
+                        <div className="flex justify-between items-center">
+                            <h1 className="text-xl font-bold">💰 مساعدي المالي</h1>
+                            <button onClick={() => setActiveTab('settings')} className="p-2 hover:bg-white/10 rounded-full">
+                                <Icons.Settings />
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Content */}
+                    <div className="p-4 fade-in">
+                        {tabs[activeTab]}
+                    </div>
+
+                    {/* Bottom Navigation */}
+                    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-2 py-2">
+                        <div className="flex justify-around items-center max-w-lg mx-auto">
+                            {[
+                                { id: 'home', icon: <Icons.Home />, label: 'الرئيسية' },
+                                { id: 'transactions', icon: <Icons.Wallet />, label: 'المعاملات' },
+                                { id: 'debts', icon: <Icons.Users />, label: 'الديون' },
+                                { id: 'gold', icon: <Icons.TrendingUp />, label: 'الذهب' },
+                                { id: 'zakat', icon: <Icons.Heart />, label: 'الزكاة' },
+                                { id: 'reports', icon: <Icons.Chart />, label: 'التقارير' },
+                            ].map(tab => (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => setActiveTab(tab.id)}
+                                    className={`nav-item flex flex-col items-center p-2 rounded-xl ${activeTab === tab.id ? 'tab-active' : 'text-gray-500'}`}
+                                >
+                                    {tab.icon}
+                                    <span className="text-[10px] mt-1">{tab.label}</span>
+                                </button>
+                            ))}
+                        </div>
+                    </nav>
+
+                    {/* Modals */}
+                    <Modal isOpen={showModal === 'income'} onClose={() => setShowModal(null)} title="إضافة دخل">
+                        <TransactionForm type="income" onSubmit={addTransaction} />
+                    </Modal>
+                    <Modal isOpen={showModal === 'expense'} onClose={() => setShowModal(null)} title="إضافة مصروف">
+                        <TransactionForm type="expense" onSubmit={addTransaction} />
+                    </Modal>
+                    <Modal isOpen={showModal === 'debt'} onClose={() => setShowModal(null)} title="إضافة دين">
+                        <DebtForm onSubmit={addDebt} />
+                    </Modal>
+                    <Modal isOpen={showModal === 'gold'} onClose={() => setShowModal(null)} title="إضافة ذهب">
+                        <GoldForm onSubmit={addGold} currentPrices={goldPrices} />
+                    </Modal>
+                    <Modal isOpen={showModal === 'sadaqa'} onClose={() => setShowModal(null)} title="صدقة جارية">
+                        <SadaqaForm onSubmit={(amount, note) => { addSadaqa(amount, note); setShowModal(null); }} />
+                    </Modal>
+                </div>
+            );
+        };
+
+        // Home Tab
+        const HomeTab = ({ balance, monthlyExpenses, settings, debtsToMe, debtsFromMe, goldValue, goldProfit, transactions, onAddIncome, onAddExpense }) => {
+            const budgetPercentage = (monthlyExpenses / settings.monthlyBudget) * 100;
+            const recentTransactions = transactions.slice(0, 5);
+
+            return (
+                <div className="space-y-4">
+                    {/* Balance Card */}
+                    <div className="balance-card rounded-2xl p-6 text-white">
+                        <p className="text-sm opacity-80">الرصيد المتاح</p>
+                        <p className="text-3xl font-bold mt-1">{formatMoney(balance)}</p>
+                        <div className="flex gap-3 mt-4">
+                            <button onClick={onAddIncome} className="flex-1 bg-white/20 hover:bg-white/30 rounded-xl py-3 flex items-center justify-center gap-2">
+                                <Icons.Plus /> دخل
+                            </button>
+                            <button onClick={onAddExpense} className="flex-1 bg-white/20 hover:bg-white/30 rounded-xl py-3 flex items-center justify-center gap-2">
+                                <Icons.Minus /> مصروف
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Budget Progress */}
+                    <div className="card p-4">
+                        <div className="flex justify-between items-center mb-2">
+                            <span className="text-gray-600">ميزانية الشهر</span>
+                            <span className="text-sm text-gray-500">{formatMoney(monthlyExpenses)} / {formatMoney(settings.monthlyBudget)}</span>
+                        </div>
+                        <div className="progress-bar">
+                            <div 
+                                className="progress-fill"
+                                style={{ 
+                                    width: `${Math.min(budgetPercentage, 100)}%`,
+                                    background: budgetPercentage > 90 ? '#ef4444' : budgetPercentage > 70 ? '#f59e0b' : '#10b981'
+                                }}
+                            ></div>
+                        </div>
+                        {budgetPercentage > 80 && (
+                            <p className="text-sm text-red-500 mt-2">⚠️ اقتربت من تجاوز الميزانية!</p>
+                        )}
+                    </div>
+
+                    {/* Quick Stats */}
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="card p-4">
+                            <p className="text-sm text-gray-500">لي عند الناس</p>
+                            <p className="text-lg font-bold text-green-600">{formatMoney(debtsToMe)}</p>
+                        </div>
+                        <div className="card p-4">
+                            <p className="text-sm text-gray-500">علي للناس</p>
+                            <p className="text-lg font-bold text-red-600">{formatMoney(debtsFromMe)}</p>
+                        </div>
+                        <div className="card p-4 col-span-2">
+                            <div className="flex justify-between items-center">
+                                <div>
+                                    <p className="text-sm text-gray-500">محفظة الذهب</p>
+                                    <p className="text-lg font-bold text-amber-600">{formatMoney(goldValue)}</p>
+                                </div>
+                                <div className={`text-sm ${goldProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                    {goldProfit >= 0 ? '+' : ''}{formatMoney(goldProfit)}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Recent Transactions */}
+                    {recentTransactions.length > 0 && (
+                        <div className="card p-4">
+                            <h3 className="font-bold text-gray-800 mb-3">آخر المعاملات</h3>
+                            <div className="space-y-2">
+                                {recentTransactions.map(t => {
+                                    const cat = [...EXPENSE_CATEGORIES, ...INCOME_CATEGORIES].find(c => c.id === t.category);
+                                    return (
+                                        <div key={t.id} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                                            <div className="flex items-center gap-3">
+                                                <span className="text-xl">{cat?.emoji || '💰'}</span>
+                                                <div>
+                                                    <p className="text-sm font-medium">{t.note || cat?.name}</p>
+                                                    <p className="text-xs text-gray-400">{formatDate(t.date)}</p>
+                                                </div>
+                                            </div>
+                                            <span className={`font-bold ${t.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
+                                                {t.type === 'income' ? '+' : '-'}{formatMoney(t.amount)}
+                                            </span>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        // Transactions Tab
+        const TransactionsTab = ({ transactions, onDelete, onAddIncome, onAddExpense }) => {
+            const [filter, setFilter] = useState('all');
+            const filtered = filter === 'all' ? transactions : transactions.filter(t => t.type === filter);
+
+            return (
+                <div className="space-y-4">
+                    <div className="flex gap-2 mb-4">
+                        <button onClick={onAddIncome} className="flex-1 btn-success text-white py-3 rounded-xl flex items-center justify-center gap-2">
+                            <Icons.Plus /> دخل جديد
+                        </button>
+                        <button onClick={onAddExpense} className="flex-1 btn-danger text-white py-3 rounded-xl flex items-center justify-center gap-2">
+                            <Icons.Minus /> مصروف جديد
+                        </button>
+                    </div>
+
+                    <div className="flex gap-2">
+                        {[
+                            { id: 'all', label: 'الكل' },
+                            { id: 'income', label: 'الدخل' },
+                            { id: 'expense', label: 'المصاريف' },
+                        ].map(f => (
+                            <button
+                                key={f.id}
+                                onClick={() => setFilter(f.id)}
+                                className={`px-4 py-2 rounded-full text-sm ${filter === f.id ? 'bg-[#1e3a5f] text-white' : 'bg-white text-gray-600'}`}
+                            >
+                                {f.label}
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className="card">
+                        {filtered.length === 0 ? (
+                            <p className="text-center text-gray-400 py-8">لا توجد معاملات</p>
+                        ) : (
+                            <div className="divide-y divide-gray-100">
+                                {filtered.map((t, index) => {
+                                    const cat = [...EXPENSE_CATEGORIES, ...INCOME_CATEGORIES].find(c => c.id === t.category);
+                                    return (
+                                        <div key={t.id} className="flex items-center justify-between p-4">
+                                            <div className="flex items-center gap-3">
+                                                <span className="text-gray-400 text-sm w-6">{index + 1}</span>
+                                                <span className="text-2xl">{cat?.emoji || '💰'}</span>
+                                                <div>
+                                                    <p className="font-medium">{t.note || cat?.name}</p>
+                                                    <p className="text-xs text-gray-400">{formatDate(t.date)}</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <span className={`font-bold ${t.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
+                                                    {t.type === 'income' ? '+' : '-'}{formatMoney(t.amount)}
+                                                </span>
+                                                <button onClick={() => onDelete(t.id)} className="p-2 text-red-400 hover:bg-red-50 rounded-full">
+                                                    <Icons.Trash />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        // Transaction Form
+        const TransactionForm = ({ type, onSubmit }) => {
+            const [amount, setAmount] = useState('');
+            const [category, setCategory] = useState('');
+            const [note, setNote] = useState('');
+            const categories = type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                if (!amount || !category) return;
+                onSubmit({ type, amount: parseFloat(amount), category, note });
+            };
+
+            return (
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                        <label className="block text-sm text-gray-600 mb-2">المبلغ</label>
+                        <input
+                            type="number"
+                            value={amount}
+                            onChange={(e) => setAmount(e.target.value)}
+                            className="input-field"
+                            placeholder="0.00"
+                            required
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm text-gray-600 mb-2">التصنيف</label>
+                        <div className="flex flex-wrap gap-2">
+                            {categories.map(cat => (
+                                <button
+                                    key={cat.id}
+                                    type="button"
+                                    onClick={() => setCategory(cat.id)}
+                                    className={`category-chip ${category === cat.id ? 'active text-white' : 'bg-gray-100'}`}
+                                    style={category === cat.id ? { background: cat.color } : {}}
+                                >
+                                    {cat.emoji} {cat.name}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                    <div>
+                        <label className="block text-sm text-gray-600 mb-2">ملاحظة (اختياري)</label>
+                        <input
+                            type="text"
+                            value={note}
+                            onChange={(e) => setNote(e.target.value)}
+                            className="input-field"
+                            placeholder="مثال: غداء مع الأصدقاء"
+                        />
+                    </div>
+                    <button type="submit" className={`w-full py-3 rounded-xl text-white font-bold ${type === 'income' ? 'btn-success' : 'btn-danger'}`}>
+                        {type === 'income' ? 'إضافة الدخل' : 'إضافة المصروف'}
+                    </button>
+                </form>
+            );
+        };
+
+        // Debts Tab
+        const DebtsTab = ({ debtsToMe, debtsFromMe, totalToMe, totalFromMe, onAdd, onPay, onDelete }) => {
+            const [activeType, setActiveType] = useState('to_me');
+            const [payModal, setPayModal] = useState(null);
+            const [payAmount, setPayAmount] = useState('');
+
+            const handlePay = () => {
+                if (payAmount && payModal) {
+                    onPay(payModal.id, parseFloat(payAmount));
+                    setPayModal(null);
+                    setPayAmount('');
+                }
+            };
+
+            const activeDebts = activeType === 'to_me' ? debtsToMe : debtsFromMe;
+
+            return (
+                <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="card p-4 text-center">
+                            <p className="text-sm text-gray-500">لي عند الناس</p>
+                            <p className="text-xl font-bold text-green-600">{formatMoney(totalToMe)}</p>
+                        </div>
+                        <div className="card p-4 text-center">
+                            <p className="text-sm text-gray-500">علي للناس</p>
+                            <p className="text-xl font-bold text-red-600">{formatMoney(totalFromMe)}</p>
+                        </div>
+                    </div>
+
+                    <button onClick={onAdd} className="w-full btn-primary text-white py-3 rounded-xl flex items-center justify-center gap-2">
+                        <Icons.Plus /> إضافة دين جديد
+                    </button>
+
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => setActiveType('to_me')}
+                            className={`flex-1 py-2 rounded-xl text-sm ${activeType === 'to_me' ? 'bg-green-500 text-white' : 'bg-white text-gray-600'}`}
+                        >
+                            لي عند الناس ({debtsToMe.length})
+                        </button>
+                        <button
+                            onClick={() => setActiveType('from_me')}
+                            className={`flex-1 py-2 rounded-xl text-sm ${activeType === 'from_me' ? 'bg-red-500 text-white' : 'bg-white text-gray-600'}`}
+                        >
+                            علي للناس ({debtsFromMe.length})
+                        </button>
+                    </div>
+
+                    <div className="space-y-3">
+                        {activeDebts.length === 0 ? (
+                            <div className="card p-8 text-center text-gray-400">
+                                لا توجد ديون
+                            </div>
+                        ) : (
+                            activeDebts.map(debt => (
+                                <div key={debt.id} className={`card p-4 ${activeType === 'to_me' ? 'debt-in' : 'debt-out'}`}>
+                                    <div className="flex justify-between items-start mb-2">
+                                        <div>
+                                            <p className="font-bold text-lg">{debt.person}</p>
+                                            <p className="text-xs text-gray-400">{formatDate(debt.date)}</p>
+                                        </div>
+                                        <button onClick={() => onDelete(debt.id)} className="p-1 text-red-400 hover:bg-red-50 rounded">
+                                            <Icons.Trash />
+                                        </button>
+                                    </div>
+                                    {debt.note && <p className="text-sm text-gray-500 mb-2">{debt.note}</p>}
+                                    <div className="flex justify-between items-center">
+                                        <div>
+                                            <p className="text-sm text-gray-500">المتبقي: <span className="font-bold text-gray-800">{formatMoney(debt.remaining)}</span></p>
+                                            <p className="text-xs text-gray-400">من أصل {formatMoney(debt.amount)}</p>
+                                        </div>
+                                        <button
+                                            onClick={() => { setPayModal(debt); setPayAmount(debt.remaining.toString()); }}
+                                            className="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm"
+                                        >
+                                            سداد
+                                        </button>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+
+                    {/* Pay Modal */}
+                    <Modal isOpen={!!payModal} onClose={() => setPayModal(null)} title={`سداد دين ${payModal?.person}`}>
+                        <div className="space-y-4">
+                            <p className="text-gray-600">المتبقي: {formatMoney(payModal?.remaining || 0)}</p>
+                            <input
+                                type="number"
+                                value={payAmount}
+                                onChange={(e) => setPayAmount(e.target.value)}
+                                className="input-field"
+                                placeholder="مبلغ السداد"
+                                max={payModal?.remaining}
+                            />
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => setPayAmount(payModal?.remaining.toString())}
+                                    className="flex-1 bg-gray-100 py-2 rounded-lg text-sm"
+                                >
+                                    سداد كامل
+                                </button>
+                                <button
+                                    onClick={() => setPayAmount((payModal?.remaining / 2).toString())}
+                                    className="flex-1 bg-gray-100 py-2 rounded-lg text-sm"
+                                >
+                                    نصف المبلغ
+                                </button>
+                            </div>
+                            <button onClick={handlePay} className="w-full btn-success text-white py-3 rounded-xl">
+                                تأكيد السداد
+                            </button>
+                        </div>
+                    </Modal>
+                </div>
+            );
+        };
+
+        // Debt Form
+        const DebtForm = ({ onSubmit }) => {
+            const [type, setType] = useState('to_me');
+            const [person, setPerson] = useState('');
+            const [amount, setAmount] = useState('');
+            const [note, setNote] = useState('');
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                if (!person || !amount) return;
+                onSubmit({ type, person, amount: parseFloat(amount), note });
+            };
+
+            return (
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="flex gap-2">
+                        <button
+                            type="button"
+                            onClick={() => setType('to_me')}
+                            className={`flex-1 py-3 rounded-xl ${type === 'to_me' ? 'bg-green-500 text-white' : 'bg-gray-100'}`}
+                        >
+                            لي عند حد
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setType('from_me')}
+                            className={`flex-1 py-3 rounded-xl ${type === 'from_me' ? 'bg-red-500 text-white' : 'bg-gray-100'}`}
+                        >
+                            علي لحد
+                        </button>
+                    </div>
+                    <input
+                        type="text"
+                        value={person}
+                        onChange={(e) => setPerson(e.target.value)}
+                        className="input-field"
+                        placeholder="اسم الشخص"
+                        required
+                    />
+                    <input
+                        type="number"
+                        value={amount}
+                        onChange={(e) => setAmount(e.target.value)}
+                        className="input-field"
+                        placeholder="المبلغ"
+                        required
+                    />
+                    <input
+                        type="text"
+                        value={note}
+                        onChange={(e) => setNote(e.target.value)}
+                        className="input-field"
+                        placeholder="سبب الدين (اختياري)"
+                    />
+                    <button type="submit" className="w-full btn-primary text-white py-3 rounded-xl">
+                        إضافة الدين
+                    </button>
+                </form>
+            );
+        };
+
+        // Gold Tab
+        const GoldTab = ({ holdings, prices, totalValue, totalProfit, onAdd, onSell, onRefresh }) => {
+            return (
+                <div className="space-y-4">
+                    {/* Gold Prices */}
+                    <div className="gold-card rounded-2xl p-6 text-white">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="font-bold">أسعار الذهب اليوم</h3>
+                            <button onClick={onRefresh} className="p-2 hover:bg-white/20 rounded-full">
+                                <Icons.Refresh />
+                            </button>
+                        </div>
+                        <div className="grid grid-cols-3 gap-3">
+                            {GOLD_TYPES.map(type => (
+                                <div key={type.id} className="bg-white/20 rounded-xl p-3 text-center">
+                                    <p className="text-xs opacity-80">{type.name}</p>
+                                    <p className="font-bold">{prices[type.id]} ج.م</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Portfolio Summary */}
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="card p-4 text-center">
+                            <p className="text-sm text-gray-500">قيمة المحفظة</p>
+                            <p className="text-xl font-bold text-amber-600">{formatMoney(totalValue)}</p>
+                        </div>
+                        <div className="card p-4 text-center">
+                            <p className="text-sm text-gray-500">الربح/الخسارة</p>
+                            <p className={`text-xl font-bold ${totalProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                {totalProfit >= 0 ? '+' : ''}{formatMoney(totalProfit)}
+                            </p>
+                        </div>
+                    </div>
+
+                    <button onClick={onAdd} className="w-full btn-gold text-white py-3 rounded-xl flex items-center justify-center gap-2">
+                        <Icons.Plus /> إضافة ذهب جديد
+                    </button>
+
+                    {/* Holdings */}
+                    <div className="space-y-3">
+                        {holdings.length === 0 ? (
+                            <div className="card p-8 text-center text-gray-400">
+                                لا يوجد ذهب في محفظتك
+                            </div>
+                        ) : (
+                            holdings.map(gold => {
+                                const type = GOLD_TYPES.find(t => t.id === gold.type);
+                                const currentValue = gold.weight * prices[gold.type];
+                                const purchaseValue = gold.weight * gold.purchasePrice;
+                                const profit = currentValue - purchaseValue;
+                                return (
+                                    <div key={gold.id} className="card p-4">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <div>
+                                                <p className="font-bold">💍 {type.name}</p>
+                                                <p className="text-sm text-gray-500">{gold.weight} جرام</p>
+                                            </div>
+                                            <button
+                                                onClick={() => onSell(gold.id)}
+                                                className="bg-amber-500 text-white px-3 py-1 rounded-lg text-sm"
+                                            >
+                                                بيع
+                                            </button>
+                                        </div>
+                                        <div className="grid grid-cols-3 gap-2 text-center text-sm">
+                                            <div>
+                                                <p className="text-gray-400">سعر الشراء</p>
+                                                <p className="font-medium">{formatMoney(purchaseValue)}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-gray-400">القيمة الحالية</p>
+                                                <p className="font-medium text-amber-600">{formatMoney(currentValue)}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-gray-400">الربح</p>
+                                                <p className={`font-medium ${profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                    {profit >= 0 ? '+' : ''}{formatMoney(profit)}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        // Gold Form
+        const GoldForm = ({ onSubmit, currentPrices }) => {
+            const [type, setType] = useState('21');
+            const [weight, setWeight] = useState('');
+            const [purchasePrice, setPurchasePrice] = useState('');
+
+            useEffect(() => {
+                setPurchasePrice(currentPrices[type].toString());
+            }, [type, currentPrices]);
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                if (!weight || !purchasePrice) return;
+                onSubmit({ type, weight: parseFloat(weight), purchasePrice: parseFloat(purchasePrice) });
+            };
+
+            return (
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                        <label className="block text-sm text-gray-600 mb-2">نوع الذهب</label>
+                        <div className="flex gap-2">
+                            {GOLD_TYPES.map(t => (
+                                <button
+                                    key={t.id}
+                                    type="button"
+                                    onClick={() => setType(t.id)}
+                                    className={`flex-1 py-3 rounded-xl ${type === t.id ? 'bg-amber-500 text-white' : 'bg-gray-100'}`}
+                                >
+                                    {t.name}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                    <div>
+                        <label className="block text-sm text-gray-600 mb-2">الوزن (جرام)</label>
+                        <input
+                            type="number"
+                            value={weight}
+                            onChange={(e) => setWeight(e.target.value)}
+                            className="input-field"
+                            placeholder="مثال: 10"
+                            step="0.01"
+                            required
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm text-gray-600 mb-2">سعر الشراء للجرام</label>
+                        <input
+                            type="number"
+                            value={purchasePrice}
+                            onChange={(e) => setPurchasePrice(e.target.value)}
+                            className="input-field"
+                            placeholder="سعر الجرام وقت الشراء"
+                            required
+                        />
+                    </div>
+                    {weight && purchasePrice && (
+                        <div className="bg-amber-50 p-3 rounded-xl text-center">
+                            <p className="text-sm text-gray-500">إجمالي المبلغ</p>
+                            <p className="text-lg font-bold text-amber-600">{formatMoney(parseFloat(weight) * parseFloat(purchasePrice))}</p>
+                        </div>
+                    )}
+                    <button type="submit" className="w-full btn-gold text-white py-3 rounded-xl">
+                        إضافة الذهب
+                    </button>
+                </form>
+            );
+        };
+
+        // Zakat Tab
+        const ZakatTab = ({ balance, goldValue, nisabValue, zakatableAmount, isZakatDue, zakatAmount, goldPrice24, onAddSadaqa }) => {
+            return (
+                <div className="space-y-4">
+                    {/* Nisab Card */}
+                    <div className="zakat-card rounded-2xl p-6 text-white">
+                        <h3 className="font-bold mb-4">⚖️ نصاب الزكاة اليوم</h3>
+                        <div className="bg-white/20 rounded-xl p-4 mb-4">
+                            <p className="text-sm opacity-80">النصاب = 85 جرام ذهب عيار 24</p>
+                            <p className="text-2xl font-bold">{formatMoney(nisabValue)}</p>
+                        </div>
+                        <p className="text-sm opacity-80">سعر جرام الذهب 24: {goldPrice24} ج.م</p>
+                    </div>
+
+                    {/* Your Zakatable Wealth */}
+                    <div className="card p-4">
+                        <h3 className="font-bold text-gray-800 mb-4">💰 ثروتك الخاضعة للزكاة</h3>
+                        <div className="space-y-3">
+                            <div className="flex justify-between">
+                                <span className="text-gray-500">الرصيد النقدي</span>
+                                <span className="font-medium">{formatMoney(balance)}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-gray-500">قيمة الذهب</span>
+                                <span className="font-medium">{formatMoney(goldValue)}</span>
+                            </div>
+                            <hr />
+                            <div className="flex justify-between">
+                                <span className="font-bold">الإجمالي</span>
+                                <span className="font-bold text-lg">{formatMoney(zakatableAmount)}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Zakat Status */}
+                    <div className={`card p-4 ${isZakatDue ? 'bg-green-50 border-2 border-green-200' : 'bg-gray-50'}`}>
+                        {isZakatDue ? (
+                            <>
+                                <div className="flex items-center gap-2 mb-3">
+                                    <span className="text-2xl">✅</span>
+                                    <h3 className="font-bold text-green-700">الزكاة واجبة عليك</h3>
+                                </div>
+                                <p className="text-gray-600 mb-3">ثروتك بلغت النصاب الشرعي</p>
+                                <div className="bg-white rounded-xl p-4 text-center">
+                                    <p className="text-sm text-gray-500">مقدار الزكاة (2.5%)</p>
+                                    <p className="text-3xl font-bold text-green-600">{formatMoney(zakatAmount)}</p>
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                <div className="flex items-center gap-2 mb-3">
+                                    <span className="text-2xl">ℹ️</span>
+                                    <h3 className="font-bold text-gray-700">الزكاة غير واجبة حالياً</h3>
+                                </div>
+                                <p className="text-gray-600">ثروتك لم تبلغ النصاب بعد</p>
+                                <p className="text-sm text-gray-400 mt-2">
+                                    ينقصك: {formatMoney(nisabValue - zakatableAmount)}
+                                </p>
+                            </>
+                        )}
+                    </div>
+
+                    {/* Sadaqa Button */}
+                    <button onClick={onAddSadaqa} className="w-full bg-gradient-to-l from-pink-500 to-rose-500 text-white py-4 rounded-xl flex items-center justify-center gap-2">
+                        <Icons.Heart /> صدقة جارية ❤️
+                    </button>
+                </div>
+            );
+        };
+
+        // Sadaqa Form
+        const SadaqaForm = ({ onSubmit }) => {
+            const [amount, setAmount] = useState('');
+            const [note, setNote] = useState('');
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                if (!amount) return;
+                onSubmit(parseFloat(amount), note || 'صدقة');
+            };
+
+            return (
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="text-center mb-4">
+                        <span className="text-5xl">❤️</span>
+                        <p className="text-gray-500 mt-2">"ما نقص مال من صدقة"</p>
+                    </div>
+                    <input
+                        type="number"
+                        value={amount}
+                        onChange={(e) => setAmount(e.target.value)}
+                        className="input-field"
+                        placeholder="مبلغ الصدقة"
+                        required
+                    />
+                    <input
+                        type="text"
+                        value={note}
+                        onChange={(e) => setNote(e.target.value)}
+                        className="input-field"
+                        placeholder="ملاحظة (اختياري)"
+                    />
+                    <button type="submit" className="w-full bg-gradient-to-l from-pink-500 to-rose-500 text-white py-3 rounded-xl">
+                        تسجيل الصدقة
+                    </button>
+                </form>
+            );
+        };
+
+        // Reports Tab
+        const ReportsTab = ({ transactions, settings }) => {
+            const [period, setPeriod] = useState('month');
+
+            const filteredTransactions = useMemo(() => {
+                const now = new Date();
+                let startDate;
+                if (period === 'week') {
+                    startDate = new Date(now.setDate(now.getDate() - 7));
+                } else if (period === 'month') {
+                    startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+                } else {
+                    startDate = new Date(now.getFullYear(), 0, 1);
+                }
+                return transactions.filter(t => new Date(t.date) >= startDate);
+            }, [transactions, period]);
+
+            const stats = useMemo(() => {
+                const income = filteredTransactions.filter(t => t.type === 'income').reduce((a, t) => a + t.amount, 0);
+                const expense = filteredTransactions.filter(t => t.type === 'expense').reduce((a, t) => a + t.amount, 0);
+                return { income, expense, net: income - expense };
+            }, [filteredTransactions]);
+
+            const expensesByCategory = useMemo(() => {
+                const expenses = filteredTransactions.filter(t => t.type === 'expense');
+                const grouped = expenses.reduce((acc, t) => {
+                    acc[t.category] = (acc[t.category] || 0) + t.amount;
+                    return acc;
+                }, {});
+                return Object.entries(grouped).map(([category, amount]) => {
+                    const cat = EXPENSE_CATEGORIES.find(c => c.id === category);
+                    return { name: cat?.name || category, value: amount, color: cat?.color || '#6b7280' };
+                }).sort((a, b) => b.value - a.value);
+            }, [filteredTransactions]);
+
+            return (
+                <div className="space-y-4">
+                    {/* Period Selector */}
+                    <div className="flex gap-2">
+                        {[
+                            { id: 'week', label: 'أسبوع' },
+                            { id: 'month', label: 'شهر' },
+                            { id: 'year', label: 'سنة' },
+                        ].map(p => (
+                            <button
+                                key={p.id}
+                                onClick={() => setPeriod(p.id)}
+                                className={`flex-1 py-2 rounded-xl text-sm ${period === p.id ? 'bg-[#1e3a5f] text-white' : 'bg-white text-gray-600'}`}
+                            >
+                                {p.label}
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* Summary Cards */}
+                    <div className="grid grid-cols-3 gap-2">
+                        <div className="card p-3 text-center">
+                            <p className="text-xs text-gray-500">الدخل</p>
+                            <p className="font-bold text-green-600">{formatMoney(stats.income)}</p>
+                        </div>
+                        <div className="card p-3 text-center">
+                            <p className="text-xs text-gray-500">المصروفات</p>
+                            <p className="font-bold text-red-600">{formatMoney(stats.expense)}</p>
+                        </div>
+                        <div className="card p-3 text-center">
+                            <p className="text-xs text-gray-500">الصافي</p>
+                            <p className={`font-bold ${stats.net >= 0 ? 'text-green-600' : 'text-red-600'}`}>{formatMoney(stats.net)}</p>
+                        </div>
+                    </div>
+
+                    {/* Expense Pie Chart */}
+                    {expensesByCategory.length > 0 && (
+                        <div className="card p-4">
+                            <h3 className="font-bold text-gray-800 mb-4">📊 توزيع المصروفات</h3>
+                            <div className="h-48">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <PieChart>
+                                        <Pie
+                                            data={expensesByCategory}
+                                            cx="50%"
+                                            cy="50%"
+                                            innerRadius={40}
+                                            outerRadius={70}
+                                            dataKey="value"
+                                            label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                                            labelLine={false}
+                                        >
+                                            {expensesByCategory.map((entry, index) => (
+                                                <Cell key={index} fill={entry.color} />
+                                            ))}
+                                        </Pie>
+                                        <Tooltip formatter={(value) => formatMoney(value)} />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Category Breakdown */}
+                    <div className="card p-4">
+                        <h3 className="font-bold text-gray-800 mb-4">📋 تفصيل المصروفات</h3>
+                        <div className="space-y-3">
+                            {expensesByCategory.length === 0 ? (
+                                <p className="text-center text-gray-400 py-4">لا توجد مصروفات في هذه الفترة</p>
+                            ) : (
+                                expensesByCategory.map((cat, index) => (
+                                    <div key={cat.name} className="flex items-center gap-3">
+                                        <span className="text-gray-400 w-6">{index + 1}</span>
+                                        <div className="w-3 h-3 rounded-full" style={{ background: cat.color }}></div>
+                                        <span className="flex-1">{cat.name}</span>
+                                        <span className="font-medium">{formatMoney(cat.value)}</span>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Budget Analysis */}
+                    <div className="card p-4">
+                        <h3 className="font-bold text-gray-800 mb-4">📈 تحليل الميزانية</h3>
+                        <div className="space-y-2">
+                            <div className="flex justify-between text-sm">
+                                <span>الميزانية الشهرية</span>
+                                <span className="font-medium">{formatMoney(settings.monthlyBudget)}</span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                                <span>المصروف الشهري</span>
+                                <span className="font-medium text-red-600">{formatMoney(stats.expense)}</span>
+                            </div>
+                            <hr />
+                            <div className="flex justify-between">
+                                <span className="font-bold">المتبقي</span>
+                                <span className={`font-bold ${settings.monthlyBudget - stats.expense >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                    {formatMoney(settings.monthlyBudget - stats.expense)}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // Settings Tab
+        const SettingsTab = ({ settings, onUpdate, onReset }) => {
+            const [budget, setBudget] = useState(settings.monthlyBudget.toString());
+
+            const handleSave = () => {
+                onUpdate({ ...settings, monthlyBudget: parseFloat(budget) || 5000 });
+            };
+
+            return (
+                <div className="space-y-4">
+                    <div className="card p-4">
+                        <h3 className="font-bold text-gray-800 mb-4">⚙️ إعدادات الميزانية</h3>
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm text-gray-600 mb-2">الميزانية الشهرية</label>
+                                <input
+                                    type="number"
+                                    value={budget}
+                                    onChange={(e) => setBudget(e.target.value)}
+                                    className="input-field"
+                                />
+                            </div>
+                            <button onClick={handleSave} className="w-full btn-primary text-white py-3 rounded-xl">
+                                حفظ الإعدادات
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="card p-4">
+                        <h3 className="font-bold text-gray-800 mb-4">📱 تثبيت التطبيق</h3>
+                        <p className="text-gray-600 text-sm mb-4">
+                            لإضافة التطبيق على شاشة الآيفون:
+                        </p>
+                        <ol className="text-sm text-gray-500 space-y-2 mr-4 list-decimal">
+                            <li>افتح التطبيق في Safari</li>
+                            <li>اضغط على زر المشاركة (السهم للأعلى)</li>
+                            <li>اختر "Add to Home Screen"</li>
+                        </ol>
+                    </div>
+
+                    <div className="card p-4 border-2 border-red-200">
+                        <h3 className="font-bold text-red-600 mb-4">⚠️ منطقة الخطر</h3>
+                        <p className="text-gray-600 text-sm mb-4">
+                            حذف جميع البيانات والبدء من جديد
+                        </p>
+                        <button onClick={onReset} className="w-full btn-danger text-white py-3 rounded-xl">
+                            تصفير النظام
+                        </button>
+                    </div>
+
+                    <div className="text-center text-gray-400 text-sm py-4">
+                        <p>مساعدي المالي v1.0</p>
+                        <p>صُنع بـ ❤️</p>
+                    </div>
+                </div>
+            );
+        };
+
+        // Render App
+        ReactDOM.createRoot(document.getElementById('app')).render(<App />);
+    </script>
+</body>
+</html>
