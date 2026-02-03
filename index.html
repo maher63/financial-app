@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="المحفظة">
-    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3ClinearGradient id='bg' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%231e3a8a'/%3E%3Cstop offset='100%25' style='stop-color:%233b82f6'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='512' height='512' rx='100' fill='url(%23bg)'/%3E%3Ccircle cx='256' cy='256' r='120' fill='none' stroke='white' stroke-width='20'/%3E%3Cpath d='M256 180 L256 332' stroke='white' stroke-width='20' stroke-linecap='round'/%3E%3Cpath d='M200 256 L312 256' stroke='white' stroke-width='20' stroke-linecap='round'/%3E%3C/svg%3E">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
     <link rel="manifest" href="manifest.json">
     <title>المحفظة الذكية</title>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
@@ -357,6 +357,25 @@
             min-height: 85px;
         }
         
+        .stat-widget.stat-widget-vertical {
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            gap: 8px;
+            padding: 14px 8px;
+            min-height: 80px;
+        }
+        
+        .stat-widget.stat-widget-vertical .stat-widget-title {
+            font-size: 0.7rem;
+            line-height: 1.3;
+        }
+        
+        .stat-widget.stat-widget-vertical .stat-widget-value {
+            font-size: 1rem;
+        }
+        
         .stat-widget-right {
             display: flex;
             align-items: center;
@@ -672,11 +691,12 @@
             width: calc(100% - 32px);
             max-width: 420px;
             border-radius: var(--radius-xl);
-            padding: 24px;
             max-height: 85vh;
-            overflow-y: auto;
             animation: modalPop 0.3s ease;
             margin: 16px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
         }
         
         @keyframes modalPop {
@@ -688,7 +708,25 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 24px;
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+        
+        .modal-body {
+            padding: 20px 24px;
+            overflow-y: auto;
+            flex: 1;
+        }
+        
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+        
+        .modal-footer .btn {
+            width: 100%;
         }
         
         .modal-title {
@@ -818,9 +856,13 @@
         }
         
         .clear-filter-btn {
-            width: 36px;
-            height: 36px;
-            border-radius: var(--radius-md);
+            width: 42px;
+            height: 42px;
+            min-width: 42px;
+            min-height: 42px;
+            max-width: 42px;
+            max-height: 42px;
+            border-radius: 8px;
             background: var(--bg-input);
             border: 1px solid var(--border-color);
             color: var(--text-muted);
@@ -830,12 +872,17 @@
             cursor: pointer;
             transition: all 0.2s ease;
             flex-shrink: 0;
+            aspect-ratio: 1 / 1;
         }
         
         .clear-filter-btn:hover {
             background: var(--accent-red);
             border-color: var(--accent-red);
             color: white;
+        }
+        
+        .clear-filter-btn:active {
+            transform: scale(0.95);
         }
         
         .search-box {
@@ -1916,23 +1963,38 @@
         
         .calendar-popup {
             display: none;
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            margin-top: 8px;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             background: var(--bg-card);
             border: 1px solid var(--border-color);
             border-radius: var(--radius-lg);
-            padding: 12px;
-            z-index: 300;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
-            max-width: 280px;
+            padding: 16px;
+            z-index: 1000;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            width: calc(100% - 32px);
+            max-width: 320px;
         }
         
         .calendar-popup.active {
             display: block;
             animation: modalPop 0.2s ease;
+        }
+        
+        .calendar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+        }
+        
+        .calendar-overlay.active {
+            display: block;
         }
         
         .calendar-header {
@@ -3583,29 +3645,17 @@
         <div class="section" style="padding-top: 16px;">
             <!-- Summary Cards -->
             <div class="stats-grid" style="margin-bottom: 16px; grid-template-columns: repeat(3, 1fr);">
-                <div class="stat-widget">
-                    <div class="stat-widget-right">
-                        <span class="stat-widget-title">لي عند الناس</span>
-                    </div>
-                    <div class="stat-widget-left">
-                        <p class="stat-widget-value green" id="debts-to-me-2">0</p>
-                    </div>
+                <div class="stat-widget stat-widget-vertical">
+                    <span class="stat-widget-title">لي عند الناس</span>
+                    <p class="stat-widget-value green" id="debts-to-me-2">0</p>
                 </div>
-                <div class="stat-widget">
-                    <div class="stat-widget-right">
-                        <span class="stat-widget-title">عليّ للناس</span>
-                    </div>
-                    <div class="stat-widget-left">
-                        <p class="stat-widget-value red" id="debts-from-me-2">0</p>
-                    </div>
+                <div class="stat-widget stat-widget-vertical">
+                    <span class="stat-widget-title">عليّ للناس</span>
+                    <p class="stat-widget-value red" id="debts-from-me-2">0</p>
                 </div>
-                <div class="stat-widget">
-                    <div class="stat-widget-right">
-                        <span class="stat-widget-title">أقساط شهرية</span>
-                    </div>
-                    <div class="stat-widget-left">
-                        <p class="stat-widget-value blue" id="monthly-installments">0</p>
-                    </div>
+                <div class="stat-widget stat-widget-vertical">
+                    <span class="stat-widget-title">أقساط شهرية</span>
+                    <p class="stat-widget-value blue" id="monthly-installments">0</p>
                 </div>
             </div>
             
@@ -4338,7 +4388,6 @@
     <!-- Income Modal -->
     <div class="modal-overlay" id="modal-income">
         <div class="modal-content">
-            
             <div class="modal-header">
                 <h3 class="modal-title">إضافة دخل</h3>
                 <button class="modal-close" onclick="closeModal('income')">
@@ -4346,35 +4395,38 @@
                 </button>
             </div>
             
-            <div class="amount-input-box">
-                <input type="number" id="income-amount" placeholder="0" inputmode="decimal">
-                <p class="amount-input-currency" id="income-currency-label"></p>
-            </div>
-            
-            <div class="form-group">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                    <label class="form-label" style="margin: 0;">التصنيف</label>
-                    <button type="button" class="add-category-btn" onclick="openModal('custom-category'); customCategoryType='income';">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-                        جديد
-                    </button>
+            <div class="modal-body">
+                <div class="amount-input-box">
+                    <input type="number" id="income-amount" placeholder="0" inputmode="decimal">
+                    <p class="amount-input-currency" id="income-currency-label"></p>
                 </div>
-                <div class="category-grid" id="income-categories"></div>
+                
+                <div class="form-group">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <label class="form-label" style="margin: 0;">التصنيف</label>
+                        <button type="button" class="add-category-btn" onclick="openModal('custom-category'); customCategoryType='income';">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                            جديد
+                        </button>
+                    </div>
+                    <div class="category-grid" id="income-categories"></div>
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label">ملاحظة (اختياري)</label>
+                    <input type="text" id="income-note" class="form-input" placeholder="مثال: مرتب شهر يناير">
+                </div>
             </div>
             
-            <div class="form-group">
-                <label class="form-label">ملاحظة (اختياري)</label>
-                <input type="text" id="income-note" class="form-input" placeholder="مثال: مرتب شهر يناير">
+            <div class="modal-footer">
+                <button class="btn btn-success" onclick="addIncome()">إضافة الدخل</button>
             </div>
-            
-            <button class="btn btn-success" onclick="addIncome()">إضافة الدخل</button>
         </div>
     </div>
 
     <!-- Expense Modal -->
     <div class="modal-overlay" id="modal-expense">
         <div class="modal-content">
-            
             <div class="modal-header">
                 <h3 class="modal-title">إضافة مصروف</h3>
                 <button class="modal-close" onclick="closeModal('expense')">
@@ -4382,28 +4434,32 @@
                 </button>
             </div>
             
-            <div class="amount-input-box">
-                <input type="number" id="expense-amount" placeholder="0" inputmode="decimal">
-                <p class="amount-input-currency" id="expense-currency-label"></p>
-            </div>
-            
-            <div class="form-group">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                    <label class="form-label" style="margin: 0;">التصنيف</label>
-                    <button type="button" class="add-category-btn" onclick="openModal('custom-category'); customCategoryType='expense';">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-                        جديد
-                    </button>
+            <div class="modal-body">
+                <div class="amount-input-box">
+                    <input type="number" id="expense-amount" placeholder="0" inputmode="decimal">
+                    <p class="amount-input-currency" id="expense-currency-label"></p>
                 </div>
-                <div class="category-grid" id="expense-categories"></div>
+                
+                <div class="form-group">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <label class="form-label" style="margin: 0;">التصنيف</label>
+                        <button type="button" class="add-category-btn" onclick="openModal('custom-category'); customCategoryType='expense';">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                            جديد
+                        </button>
+                    </div>
+                    <div class="category-grid" id="expense-categories"></div>
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label">ملاحظة (اختياري)</label>
+                    <input type="text" id="expense-note" class="form-input" placeholder="مثال: فاتورة الكهرباء">
+                </div>
             </div>
             
-            <div class="form-group">
-                <label class="form-label">ملاحظة (اختياري)</label>
-                <input type="text" id="expense-note" class="form-input" placeholder="مثال: فاتورة الكهرباء">
+            <div class="modal-footer">
+                <button class="btn btn-danger" onclick="addExpense()">إضافة المصروف</button>
             </div>
-            
-            <button class="btn btn-danger" onclick="addExpense()">إضافة المصروف</button>
         </div>
     </div>
 
@@ -4459,7 +4515,6 @@
     <!-- Debt Modal -->
     <div class="modal-overlay" id="modal-debt">
         <div class="modal-content">
-            
             <div class="modal-header">
                 <h3 class="modal-title">إضافة دين</h3>
                 <button class="modal-close" onclick="closeModal('debt')">
@@ -4467,43 +4522,46 @@
                 </button>
             </div>
             
-            <div class="toggle-group" style="margin-bottom: 20px;">
-                <button class="toggle-btn active green" id="debt-type-to" onclick="setDebtType('to_me')">لي عند حد</button>
-                <button class="toggle-btn" id="debt-type-from" onclick="setDebtType('from_me')">عليّ لحد</button>
-            </div>
-            
-            <div class="form-group">
-                <label class="form-label">اسم الشخص</label>
-                <input type="text" id="debt-person" class="form-input" placeholder="مثال: أحمد">
-            </div>
-            
-            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 12px;">
-                <div class="form-group">
-                    <label class="form-label">المبلغ</label>
-                    <input type="number" id="debt-amount" class="form-input" placeholder="0" inputmode="decimal">
+            <div class="modal-body">
+                <div class="toggle-group" style="margin-bottom: 20px;">
+                    <button class="toggle-btn active green" id="debt-type-to" onclick="setDebtType('to_me')">لي عند حد</button>
+                    <button class="toggle-btn" id="debt-type-from" onclick="setDebtType('from_me')">عليّ لحد</button>
                 </div>
+                
                 <div class="form-group">
-                    <label class="form-label">العملة</label>
-                    <select id="debt-currency" class="form-select">
-                        <option value="SAR">ريال</option>
-                        <option value="EGP">جنيه</option>
-                    </select>
+                    <label class="form-label">اسم الشخص</label>
+                    <input type="text" id="debt-person" class="form-input" placeholder="مثال: أحمد">
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 12px;">
+                    <div class="form-group">
+                        <label class="form-label">المبلغ</label>
+                        <input type="number" id="debt-amount" class="form-input" placeholder="0" inputmode="decimal">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">العملة</label>
+                        <select id="debt-currency" class="form-select">
+                            <option value="SAR">ريال</option>
+                            <option value="EGP">جنيه</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label">ملاحظة (اختياري)</label>
+                    <input type="text" id="debt-note" class="form-input" placeholder="مثال: سلفة">
                 </div>
             </div>
             
-            <div class="form-group">
-                <label class="form-label">ملاحظة (اختياري)</label>
-                <input type="text" id="debt-note" class="form-input" placeholder="مثال: سلفة">
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="addDebt()">إضافة الدين</button>
             </div>
-            
-            <button class="btn btn-primary" onclick="addDebt()">إضافة الدين</button>
         </div>
     </div>
 
     <!-- Pay Modal -->
     <div class="modal-overlay" id="modal-pay">
         <div class="modal-content">
-            
             <div class="modal-header">
                 <h3 class="modal-title">سداد دين</h3>
                 <button class="modal-close" onclick="closeModal('pay')">
@@ -4511,26 +4569,29 @@
                 </button>
             </div>
             
-            <p style="color: var(--text-secondary); margin-bottom: 16px; font-weight: 600;">المتبقي: <span id="pay-remaining" style="color: var(--text-primary); font-weight: 800;">0</span></p>
-            
-            <div class="form-group">
-                <label class="form-label">مبلغ السداد</label>
-                <input type="number" id="pay-amount" class="form-input" placeholder="0" inputmode="decimal">
+            <div class="modal-body">
+                <p style="color: var(--text-secondary); margin-bottom: 16px; font-weight: 600;">المتبقي: <span id="pay-remaining" style="color: var(--text-primary); font-weight: 800;">0</span></p>
+                
+                <div class="form-group">
+                    <label class="form-label">مبلغ السداد</label>
+                    <input type="number" id="pay-amount" class="form-input" placeholder="0" inputmode="decimal">
+                </div>
+                
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn btn-outline" style="flex: 1;" onclick="setPayFull()">سداد كامل</button>
+                    <button class="btn btn-outline" style="flex: 1;" onclick="setPayHalf()">نصف المبلغ</button>
+                </div>
             </div>
             
-            <div style="display: flex; gap: 10px; margin-bottom: 16px;">
-                <button class="btn btn-outline" style="flex: 1;" onclick="setPayFull()">سداد كامل</button>
-                <button class="btn btn-outline" style="flex: 1;" onclick="setPayHalf()">نصف المبلغ</button>
+            <div class="modal-footer">
+                <button class="btn btn-success" onclick="payDebt()">تأكيد السداد</button>
             </div>
-            
-            <button class="btn btn-success" onclick="payDebt()">تأكيد السداد</button>
         </div>
     </div>
 
     <!-- Installment Modal -->
     <div class="modal-overlay" id="modal-installment">
         <div class="modal-content">
-            
             <div class="modal-header">
                 <h3 class="modal-title">إضافة قسط</h3>
                 <button class="modal-close" onclick="closeModal('installment')">
@@ -4538,66 +4599,70 @@
                 </button>
             </div>
             
-            <div class="form-group">
-                <label class="form-label">اسم القسط / الجهة</label>
-                <input type="text" id="installment-name" class="form-input" placeholder="مثال: قسط السيارة - بنك الراجحي">
-            </div>
-            
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div class="modal-body">
                 <div class="form-group">
-                    <label class="form-label">التصنيف</label>
-                    <select id="installment-category" class="form-select">
-                        <option value="car">سيارة</option>
-                        <option value="property">عقار</option>
-                        <option value="device">أجهزة</option>
-                        <option value="loan">قرض</option>
-                        <option value="furniture">أثاث</option>
-                        <option value="other">أخرى</option>
-                    </select>
+                    <label class="form-label">اسم القسط / الجهة</label>
+                    <input type="text" id="installment-name" class="form-input" placeholder="مثال: قسط السيارة - بنك الراجحي">
                 </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="form-group">
+                        <label class="form-label">التصنيف</label>
+                        <select id="installment-category" class="form-select">
+                            <option value="car">سيارة</option>
+                            <option value="property">عقار</option>
+                            <option value="device">أجهزة</option>
+                            <option value="loan">قرض</option>
+                            <option value="furniture">أثاث</option>
+                            <option value="other">أخرى</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">العملة</label>
+                        <select id="installment-currency" class="form-select">
+                            <option value="SAR">ريال</option>
+                            <option value="EGP">جنيه</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="form-group">
+                        <label class="form-label">المبلغ الإجمالي</label>
+                        <input type="number" id="installment-total" class="form-input" placeholder="90000" inputmode="decimal" oninput="calculateInstallmentMonths()">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">قيمة القسط</label>
+                        <input type="number" id="installment-amount" class="form-input" placeholder="2500" inputmode="decimal" oninput="calculateInstallmentMonths()">
+                    </div>
+                </div>
+                
                 <div class="form-group">
-                    <label class="form-label">العملة</label>
-                    <select id="installment-currency" class="form-select">
-                        <option value="SAR">ريال</option>
-                        <option value="EGP">جنيه</option>
-                    </select>
+                    <label class="form-label">عدد الأقساط المتبقية</label>
+                    <input type="number" id="installment-remaining" class="form-input" placeholder="36" inputmode="numeric">
                 </div>
-            </div>
-            
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                
                 <div class="form-group">
-                    <label class="form-label">المبلغ الإجمالي</label>
-                    <input type="number" id="installment-total" class="form-input" placeholder="90000" inputmode="decimal" oninput="calculateInstallmentMonths()">
+                    <label class="form-label">يوم السداد الشهري</label>
+                    <div style="display: flex; gap: 12px; align-items: center;">
+                        <label class="toggle-checkbox" style="flex-shrink: 0;">
+                            <input type="checkbox" id="installment-has-day" onchange="toggleInstallmentDay()">
+                            <span class="toggle-checkbox-slider"></span>
+                        </label>
+                        <span style="color: var(--text-muted); font-size: 0.85rem;">تحديد يوم</span>
+                        <input type="number" id="installment-day" class="form-input" placeholder="1-28" min="1" max="28" style="width: 100px; text-align: center;" disabled>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label class="form-label">قيمة القسط</label>
-                    <input type="number" id="installment-amount" class="form-input" placeholder="2500" inputmode="decimal" oninput="calculateInstallmentMonths()">
-                </div>
-            </div>
-            
-            <div class="form-group">
-                <label class="form-label">عدد الأقساط المتبقية</label>
-                <input type="number" id="installment-remaining" class="form-input" placeholder="36" inputmode="numeric">
-            </div>
-            
-            <div class="form-group">
-                <label class="form-label">يوم السداد الشهري</label>
-                <div style="display: flex; gap: 12px; align-items: center;">
-                    <label class="toggle-checkbox" style="flex-shrink: 0;">
-                        <input type="checkbox" id="installment-has-day" onchange="toggleInstallmentDay()">
-                        <span class="toggle-checkbox-slider"></span>
-                    </label>
-                    <span style="color: var(--text-muted); font-size: 0.85rem;">تحديد يوم</span>
-                    <input type="number" id="installment-day" class="form-input" placeholder="1-28" min="1" max="28" style="width: 100px; text-align: center;" disabled>
+                
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label">ملاحظة (اختياري)</label>
+                    <input type="text" id="installment-note" class="form-input" placeholder="مثال: ينتهي ديسمبر 2026">
                 </div>
             </div>
             
-            <div class="form-group">
-                <label class="form-label">ملاحظة (اختياري)</label>
-                <input type="text" id="installment-note" class="form-input" placeholder="مثال: ينتهي ديسمبر 2026">
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="addInstallment()">إضافة القسط</button>
             </div>
-            
-            <button class="btn btn-primary" onclick="addInstallment()">إضافة القسط</button>
         </div>
     </div>
 
@@ -5528,6 +5593,7 @@
         // Transaction Date Filter Calendar
         function toggleTransCalendar(type) {
             const popup = document.getElementById('trans-calendar-' + type);
+            const overlay = document.getElementById('calendar-overlay');
             const isActive = popup.classList.contains('active');
             
             document.querySelectorAll('#page-transactions .calendar-popup').forEach(p => p.classList.remove('active'));
@@ -5537,8 +5603,10 @@
                 transCalendarCurrentMonth = new Date(type === 'from' && transFromDate ? transFromDate : (type === 'to' && transToDate ? transToDate : new Date()));
                 renderTransCalendar(type);
                 popup.classList.add('active');
+                if (overlay) overlay.classList.add('active');
             } else {
                 activeTransCalendar = null;
+                if (overlay) overlay.classList.remove('active');
             }
         }
         
@@ -6580,6 +6648,7 @@
         
         function toggleCalendar(type) {
             const popup = document.getElementById('calendar-' + type);
+            const overlay = document.getElementById('calendar-overlay');
             const isActive = popup.classList.contains('active');
             
             // Close all calendars
@@ -6590,9 +6659,18 @@
                 calendarCurrentMonth = new Date(type === 'from' ? reportFromDate : reportToDate);
                 renderCalendar(type);
                 popup.classList.add('active');
+                if (overlay) overlay.classList.add('active');
             } else {
                 activeCalendar = null;
+                if (overlay) overlay.classList.remove('active');
             }
+        }
+        
+        function closeAllCalendars() {
+            document.querySelectorAll('.calendar-popup').forEach(p => p.classList.remove('active'));
+            const overlay = document.getElementById('calendar-overlay');
+            if (overlay) overlay.classList.remove('active');
+            activeCalendar = null;
         }
         
         function renderCalendar(type) {
@@ -6712,8 +6790,7 @@
                 reportToDate = newDate;
             }
             updateDateDisplays();
-            document.getElementById('calendar-' + type).classList.remove('active');
-            activeCalendar = null;
+            closeAllCalendars();
             updateCustomReport();
         }
         
@@ -8507,6 +8584,9 @@
             confirmReset();
         });
     </script>
+    
+    <!-- Calendar Overlay -->
+    <div id="calendar-overlay" class="calendar-overlay" onclick="closeAllCalendars()"></div>
     
     <!-- Toast notification -->
     <div id="toast" class="toast"></div>
